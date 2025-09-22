@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 import mysql.connector
 
 app = Flask(__name__)
@@ -21,6 +21,29 @@ def get_db_connection():
         password=DB_CONFIG["password"],
         database=DB_CONFIG["database"],
     )
+
+
+def fetch_categories(conn):
+    cur = conn.cursor(dictionary=True)
+    cur.execute("SELECT id, name FROM categories ORDER BY name ASC")
+    cats = cur.fetchall()
+    cur.close()
+    return cats
+
+
+def fetch_book_by_id(conn, book_id: int):
+    cur = conn.cursor(dictionary=True)
+    cur.execute(
+        """
+        SELECT b.id, b.name, b.author, b.price, b.description, b.category_id
+        FROM books b
+        WHERE b.id = %s
+        """,
+        (book_id,),
+    )
+    row = cur.fetchone()
+    cur.close()
+    return row
 
 
 @app.route("/")
@@ -94,10 +117,7 @@ def index():
                     pass
 
         # Load categories for filter dropdown
-        cursor2 = conn.cursor(dictionary=True)
-        cursor2.execute("SELECT id, name FROM categories ORDER BY name ASC")
-        categories = cursor2.fetchall()
-        cursor2.close()
+        categories = fetch_categories(conn)
     except Exception as e:
         error = str(e)
     finally:
@@ -118,6 +138,135 @@ def index():
         sort=sort,
         order=order,
     )
+
+
+@app.route("/books/create", methods=["GET", "POST"])
+def create_book():
+    conn = None
+    error = None
+    try:
+        conn = get_db_connection()
+        if request.method == "POST":
+            name = request.form.get("name", "").strip()
+            author = request.form.get("author", "").strip()
+            description = request.form.get("description", "").strip()
+            price_raw = request.form.get("price", "").strip()
+            category_id = request.form.get("category_id", "").strip()
+
+            if not name or not author or not price_raw or not category_id:
+                error = "Nama, Author, Harga, dan Kategori wajib diisi."
+            else:
+                try:
+                    price = float(price_raw)
+                except ValueError:
+                    error = "Harga tidak valid."
+
+            if error is None:
+                cur = conn.cursor()
+                cur.execute(
+                    """
+                    INSERT INTO books (name, description, author, price, category_id)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (name, description, author, price, int(category_id)),
+                )
+                conn.commit()
+                cur.close()
+                return redirect(url_for("index"))
+
+        categories = fetch_categories(conn)
+        return render_template(
+            "form.html",
+            mode="create",
+            categories=categories,
+            book=None,
+            error=error,
+        )
+    except Exception as e:
+        error = str(e)
+        return render_template("form.html", mode="create", categories=[], book=None, error=error)
+    finally:
+        if conn:
+            conn.close()
+
+
+@app.route("/books/<int:book_id>/edit", methods=["GET", "POST"])
+def edit_book(book_id: int):
+    conn = None
+    error = None
+    try:
+        conn = get_db_connection()
+        if request.method == "POST":
+            name = request.form.get("name", "").strip()
+            author = request.form.get("author", "").strip()
+            description = request.form.get("description", "").strip()
+            price_raw = request.form.get("price", "").strip()
+            category_id = request.form.get("category_id", "").strip()
+
+            if not name or not author or not price_raw or not category_id:
+                error = "Nama, Author, Harga, dan Kategori wajib diisi."
+            else:
+                try:
+                    price = float(price_raw)
+                except ValueError:
+                    error = "Harga tidak valid."
+
+            if error is None:
+                cur = conn.cursor()
+                cur.execute(
+                    """
+                    UPDATE books
+                    SET name=%s, description=%s, author=%s, price=%s, category_id=%s
+                    WHERE id=%s
+                    """,
+                    (name, description, author, price, int(category_id), book_id),
+                )
+                conn.commit()
+                cur.close()
+                return redirect(url_for("index"))
+
+        # GET or validation error -> render form with current values
+        categories = fetch_categories(conn)
+        book = fetch_book_by_id(conn, book_id)
+        if not book:
+            return redirect(url_for("index"))
+        if book and book.get("price") is not None:
+            try:
+                # convert Decimal to float for safe formatting
+                book["price"] = float(book["price"])
+            except Exception:
+                pass
+        return render_template(
+            "form.html",
+            mode="edit",
+            categories=categories,
+            book=book,
+            error=error,
+        )
+    except Exception as e:
+        error = str(e)
+        return render_template("form.html", mode="edit", categories=[], book=None, error=error)
+    finally:
+        if conn:
+            conn.close()
+
+
+@app.route("/books/<int:book_id>/delete", methods=["POST"])
+def delete_book(book_id: int):
+    conn = None
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM books WHERE id = %s", (book_id,))
+        conn.commit()
+        cur.close()
+    except Exception:
+        # We can ignore error here and still redirect, or pass via query param if desired.
+        pass
+    finally:
+        if conn:
+            conn.close()
+    return redirect(url_for("index"))
 
 
 if __name__ == "__main__":

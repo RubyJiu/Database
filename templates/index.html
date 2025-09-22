@@ -15,6 +15,7 @@
       --papaya-whip: #ffecd1ff;
       --orange-wheel: #ff7d00ff;
       --sienna: #78290fff;
+      --paynes-gray: #2f4858;
       /* semantic aliases */
       --bg: var(--caribbean-current);
       --panel: var(--papaya-whip);
@@ -60,10 +61,12 @@
     .range { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
     .range span { color: var(--muted); }
     .actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; }
-    button { background: var(--accent); border: 1px solid var(--paynes-gray); color: #ffffff; padding: 10px 16px; border-radius: 8px; cursor: pointer; }
-    button:hover { background: var(--paynes-gray); }
+    button, .btn { background: var(--accent); border: 1px solid var(--paynes-gray); color: #ffffff; padding: 10px 16px; border-radius: 8px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+    button:hover, .btn:hover { background: var(--paynes-gray); }
+    button:focus-visible, .btn:focus-visible, a.reset:focus-visible { outline: 3px solid var(--accent-strong); outline-offset: 2px; }
     a.reset { color: #ffffff; text-decoration: none; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--paynes-gray); background: var(--bg); display: inline-flex; align-items: center; }
-    a.reset:hover { background: #fffbe6; border-color: var(--accent); }
+    a.reset:hover { background: #fffbe6; border-color: var(--accent); color: var(--paynes-gray); }
+    .top-actions { display: flex; justify-content: flex-end; margin-bottom: 12px; }
   </style>
 </head>
 <body>
@@ -124,6 +127,9 @@
           </div>
         </form>
 
+        <div class="top-actions">
+          <a class="btn" href="{{ url_for('create_book') }}">+ Tambah Buku</a>
+        </div>
         {% if books and books|length > 0 %}
           <table>
             <thead>
@@ -134,6 +140,7 @@
                 <th style="width:120px">Price</th>
                 <th style="width:150px">Category</th>
                 <th>Description</th>
+                <th style="width:180px">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -145,12 +152,18 @@
                   <td class="price">${{ '%.2f'|format(b.price) }}</td>
                   <td><span class="badge">{{ b.category }}</span></td>
                   <td class="muted">{{ b.description }}</td>
+                  <td>
+                    <a class="btn" href="{{ url_for('edit_book', book_id=b.id) }}" style="margin-right: 6px;">Edit</a>
+                    <form method="post" action="{{ url_for('delete_book', book_id=b.id) }}" style="display:inline" onsubmit="return confirm('Hapus buku ini?');">
+                      <button type="submit">Delete</button>
+                    </form>
+                  </td>
                 </tr>
               {% endfor %}
             </tbody>
           </table>
         {% else %}
-          <div class="muted">No books found. Make sure your database is created and seeded.</div>
+          <div class="muted">No books found. Make sure your database is created and seeded. <a class="btn" style="margin-left:8px;" href="{{ url_for('create_book') }}">+ Tambah Buku</a></div>
         {% endif %}
       </div>
     </div>
