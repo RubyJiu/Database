@@ -5,6 +5,12 @@ CREATE TABLE categories (
     name VARCHAR(255) NOT NULL
 );
 
+CREATE TABLE publishers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    country VARCHAR(255) NULL
+);
+
 CREATE TABLE books (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -12,11 +18,17 @@ CREATE TABLE books (
     author VARCHAR(255) NOT NULL,
     price DECIMAL(10, 2) NOT NULL,
     category_id INT NOT NULL,
-    FOREIGN KEY (category_id) REFERENCES categories (id)
+    publisher_id INT NULL,
+    FOREIGN KEY (category_id) REFERENCES categories (id),
+    FOREIGN KEY (publisher_id) REFERENCES publishers (id) ON DELETE SET NULL
 );
 
 
 INSERT INTO categories (name) VALUES ('Fiction'), ('Non-Fiction'), ('Romance');
+
+INSERT INTO publishers (name, country) VALUES
+('O\'Reilly Media', 'USA'),
+('Gramedia', 'Indonesia');
 
 INSERT INTO books (name, description, author, price, category_id)
 VALUES
