@@ -1,6 +1,14 @@
 - CRUD `books`, `categories`, `publishers`.
-- Filter & sort di halaman list buku.
-- JOIN yang digunakan:
-  - `INNER JOIN` dari `books` ke `categories`.
-  - `LEFT JOIN` dari `books` ke `publishers`.
+- Filter & sort at the list of books.
+- JOIN used :
+  - `INNER JOIN` from `books` to `categories`.
+  - `LEFT JOIN` from `books` to `publishers`.
+ 
+
+期末
+code: 陳生好 的 github
+PPT: 游靜靜 的 github
+
+11/17 Database System Project Proposal 
+
 
