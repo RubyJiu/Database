@@ -46,6 +46,11 @@ def delete_contact(db, contact_id):
     # Delete a contact by its ID
     contacts_collection.delete_one({"_id": contact_id})
 
+def delete_multiple_contacts(db, contact_ids):
+    contacts_collection = db['contacts']
+    # Delete multiple contacts by their IDs
+    contacts_collection.delete_many({"_id": {"$in": contact_ids}})
+
 
 
 
